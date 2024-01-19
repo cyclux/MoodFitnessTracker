@@ -1,0 +1,35 @@
+version: "3.9"
+name: moodfitness_stack
+services:
+
+  docker_moodfit:
+    container_name: python311
+    image: cyclux/moodfitnesstracker:latest
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: production
+    restart: on-failure
+    depends_on:
+      - docker_db
+    volumes:
+      - ../code/:/opt/moodfitnesstracker/
+
+    entrypoint: ["streamlit", "run", "code/app.py"]
+    # entrypoint: [ "/bin/bash" ]
+
+  docker_db:
+    image: postgres:16.1-bookworm
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=moodfit_db
+
+    volumes:
+      - ../docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    # Prevent conflict with default port 5432 of potential
+    # existing Postgres instance on the host system.
+    ports:
+      - 5433:5432
