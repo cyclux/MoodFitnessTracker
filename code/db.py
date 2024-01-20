@@ -1,8 +1,5 @@
 import sqlalchemy as sql
-
-DB_CONFIG = {
-    "uri": "postgresql://postgres:postgres@docker_db:5433/moodfit_db",
-}
+from sqlalchemy.sql import text
 
 
 def get_sql_engine(db_config: dict) -> sql.Engine:
@@ -23,4 +20,40 @@ def get_sql_engine(db_config: dict) -> sql.Engine:
     return engine
 
 
-sql_engine = get_sql_engine(DB_CONFIG)
+def add_diary_record(items: dict, sql_engine: sql.Engine) -> None:
+    """
+    Adds a record to the diary table in the moodfit_db database.
+
+    Args:
+        items (dict): A dictionary containing the diary record data.
+    """
+
+    # Construct the SQL INSERT statement
+    # insert_stmt = text(
+    #     """
+    #     INSERT INTO diary (date, tasks, sleep, bodybattery_min, bodybattery_max, steps, body, psyche, dizzy, comment)
+    #     VALUES (:date, :tasks, :sleep, :bodybattery_min, :bodybattery_max, :steps, :body, :psyche, :dizzy, :comment)
+    # """
+    # )
+
+    upsert_stmt = text(
+        """
+        INSERT INTO diary (date, tasks, sleep, bodybattery_min, bodybattery_max, steps, body, psyche, dizzy, comment)
+        VALUES (:date, :tasks, :sleep, :bodybattery_min, :bodybattery_max, :steps, :body, :psyche, :dizzy, :comment)
+        ON CONFLICT (date) DO UPDATE SET
+            tasks = EXCLUDED.tasks,
+            sleep = EXCLUDED.sleep,
+            bodybattery_min = EXCLUDED.bodybattery_min,
+            bodybattery_max = EXCLUDED.bodybattery_max,
+            steps = EXCLUDED.steps,
+            body = EXCLUDED.body,
+            psyche = EXCLUDED.psyche,
+            dizzy = EXCLUDED.dizzy,
+            comment = EXCLUDED.comment
+    """
+    )
+
+    # Execute the SQL statement with the provided items
+    with sql_engine.connect() as conn:
+        conn.execute(upsert_stmt, items)
+        conn.commit()

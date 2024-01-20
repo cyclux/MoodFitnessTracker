@@ -4,7 +4,25 @@ from typing import Any
 
 
 def get_items() -> dict:
+    """Gets user input items for mood fitness tracking.
+
+    Returns:
+        dict: Dictionary containing the following user input items:
+            - "tasks": List of selected task difficulty levels
+            - "sleep": Number of hours slept
+            - "bodybattery_min": Minimum body battery level
+            - "bodybattery_max": Maximum body battery level
+            - "steps": Number of steps taken
+            - "body": Body condition grade
+            - "psyche": Mental condition grade
+            - "dizzy": Boolean indicating dizziness
+            - "comment": Free-form text comment
+
+    """
     items: dict[Any, Any] = {}
+
+    items["date"] = st.date_input("Datum")
+    # items["date"] = "2023-03-20"
 
     items["tasks"] = st.multiselect(
         "Tätigkeiten",
