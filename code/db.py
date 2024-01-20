@@ -5,6 +5,17 @@ from typing import List
 
 
 def check_success(result: sql.CursorResult) -> str:
+    """Checks if a SQL statement was successful.
+
+    Args:
+        result (sql.CursorResult): Result of executing the SQL statement.
+
+    Returns:
+        str: A message indicating whether the SQL statement was successful.
+
+    Raises:
+        SQLAlchemyError: If there was an error executing the SQL statement.
+    """
     if result.rowcount == 1:
         return ":green[Gespeichert]"
     else:
@@ -30,13 +41,21 @@ def get_sql_engine(db_config: dict) -> sql.Engine:
 
 
 def add_diary_record(items: dict, sql_engine: sql.Engine) -> str:
-    """
-    Adds a record to the diary table in the moodfit_db database.
+    """Adds a record to the diary table in the moodfit_db database.
 
     Args:
         items (dict): A dictionary containing the diary record data.
-    """
+        sql_engine (sqlalchemy.engine.Engine): SQLAlchemy engine instance for the database.
 
+    Returns:
+        str: A message indicating whether the insert was successful.
+
+    Raises:
+        SQLAlchemyError: If there was an error executing the SQL statement.
+
+    Note:
+        Uses an UPSERT statement to insert/update the record.
+    """
     upsert_stmt = sql.text(
         """
         INSERT INTO diary (date, tasks, sleep, bodybattery_min, bodybattery_max, steps, body, psyche, dizzy, comment)

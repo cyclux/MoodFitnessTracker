@@ -5,20 +5,18 @@ from typing import Any
 
 
 def get_items(current_date: date, records: dict) -> dict:
-    """Gets user input items for mood fitness tracking.
+    """Gets user input items for new diary record.
+
+    Args:
+        current_date (date): The current date to use as default.
+        records (dict): Existing record data to use as defaults.
 
     Returns:
-        dict: Dictionary containing the following user input items:
-            - "tasks": List of selected task difficulty levels
-            - "sleep": Number of hours slept
-            - "bodybattery_min": Minimum body battery level
-            - "bodybattery_max": Maximum body battery level
-            - "steps": Number of steps taken
-            - "body": Body condition grade
-            - "psyche": Mental condition grade
-            - "dizzy": Boolean indicating dizziness
-            - "comment": Free-form text comment
+        dict: Dictionary containing the user input tracking data items.
 
+    Note:
+        Defaults are provided for all items based on previous records
+        or reasonable guesses, to simplify data entry.
     """
     items: dict[Any, Any] = records
 
