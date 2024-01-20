@@ -1,5 +1,14 @@
+from datetime import date
 import sqlalchemy as sql
-from sqlalchemy.sql import text
+from sqlalchemy.exc import SQLAlchemyError
+from typing import List
+
+
+def check_success(result: sql.CursorResult) -> str:
+    if result.rowcount == 1:
+        return ":green[Gespeichert]"
+    else:
+        return ":red[Fehler bei der Speicherung. Versuche es erneut.]"
 
 
 def get_sql_engine(db_config: dict) -> sql.Engine:
@@ -20,7 +29,7 @@ def get_sql_engine(db_config: dict) -> sql.Engine:
     return engine
 
 
-def add_diary_record(items: dict, sql_engine: sql.Engine) -> None:
+def add_diary_record(items: dict, sql_engine: sql.Engine) -> str:
     """
     Adds a record to the diary table in the moodfit_db database.
 
@@ -28,7 +37,7 @@ def add_diary_record(items: dict, sql_engine: sql.Engine) -> None:
         items (dict): A dictionary containing the diary record data.
     """
 
-    upsert_stmt = text(
+    upsert_stmt = sql.text(
         """
         INSERT INTO diary (date, tasks, sleep, bodybattery_min, bodybattery_max, steps, body, psyche, dizzy, comment)
         VALUES (:date, :tasks, :sleep, :bodybattery_min, :bodybattery_max, :steps, :body, :psyche, :dizzy, :comment)
@@ -44,8 +53,65 @@ def add_diary_record(items: dict, sql_engine: sql.Engine) -> None:
             comment = EXCLUDED.comment
     """
     )
-
     # Execute the SQL statement with the provided items
+    try:
+        with sql_engine.connect() as conn:
+            result = conn.execute(upsert_stmt, items)
+            conn.commit()
+            response_txt = check_success(result)
+
+    except SQLAlchemyError as e:
+        response_txt = f":red[Datenbankfehler:] {e}"
+
+    return response_txt
+
+
+def get_diary_record_by_date(date: date, sql_engine: sql.Engine) -> dict:
+    """Query the diary table for a specific date and return the record as a dict.
+
+    Args:
+        date (str): The date to query in the diary table.
+        sql_engine (sql.Engine): SQLAlchemy engine instance for the database.
+
+    Returns:
+        dict: The diary record of the specified date, or None if no record is found.
+    """
+    # Define the SQL SELECT statement
+    columns: List[sql.ColumnElement] = [
+        sql.column("date"),
+        sql.column("tasks"),
+        sql.column("sleep"),
+        sql.column("bodybattery_min"),
+        sql.column("bodybattery_max"),
+        sql.column("steps"),
+        sql.column("body"),
+        sql.column("psyche"),
+        sql.column("dizzy"),
+        sql.column("comment"),
+    ]
+    select_stmt = (
+        sql.select(*columns)
+        .select_from(sql.table("diary"))
+        .where(sql.column("date") == date)
+    )
+
+    # Execute the query and fetch the result
     with sql_engine.connect() as conn:
-        conn.execute(upsert_stmt, items)
-        conn.commit()
+        result = conn.execute(select_stmt).fetchone()
+
+    # If a record is found, return as a dictionary
+    if result:
+        return {
+            "date": result[0],
+            "tasks": result[1],
+            "sleep": result[2],
+            "bodybattery_min": result[3],
+            "bodybattery_max": result[4],
+            "steps": result[5],
+            "body": result[6],
+            "psyche": result[7],
+            "dizzy": result[8],
+            "comment": result[9],
+        }
+    else:
+        return {}
