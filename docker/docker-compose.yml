@@ -8,14 +8,14 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
-      target: production
+      target: development
     restart: on-failure
     depends_on:
       - docker_db
     volumes:
       - ../code/:/opt/moodfitnesstracker/
     ports:
-      - 8501:8501
+      - 80:8501
 
     entrypoint: ["streamlit", "run", "/opt/moodfitnesstracker/app.py"]
 

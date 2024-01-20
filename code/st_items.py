@@ -31,10 +31,10 @@ def get_items(current_date: date, records: dict) -> dict:
 
     items["sleep"] = st.slider(
         "Schlaf",
-        min_value=0,
-        max_value=12,
-        value=items.get("sleep", 6),
-        step=1,
+        min_value=0.0,
+        max_value=12.0,
+        value=items.get("sleep", 6.0),
+        step=0.5,
         help="Schlaf in Stunden",
     )
 
