@@ -42,7 +42,8 @@
         "Gruntfuggly.todo-tree",
         "ms-python.vscode-pylance",
         "matangover.mypy",
-        "sourcegraph.cody-ai"
+        "sourcegraph.cody-ai",
+        "donjayamanne.git-extension-pack"
       ]
     }
   }
