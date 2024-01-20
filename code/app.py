@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 import streamlit as st
 from db import get_sql_engine, add_diary_record, get_diary_record_by_date
 from st_items import get_items
@@ -14,7 +14,9 @@ def main():
 
     st.title("Vitaltagebuch")
 
-    current_date = st.date_input("Datum")
+    # Default date is "yesterday"
+    date_yesterday = date.today() - timedelta(days=1)
+    current_date = st.date_input("Datum", date_yesterday)
 
     if isinstance(current_date, date):
         records = get_diary_record_by_date(current_date, sql_engine)
