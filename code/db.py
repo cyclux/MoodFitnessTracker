@@ -28,14 +28,6 @@ def add_diary_record(items: dict, sql_engine: sql.Engine) -> None:
         items (dict): A dictionary containing the diary record data.
     """
 
-    # Construct the SQL INSERT statement
-    # insert_stmt = text(
-    #     """
-    #     INSERT INTO diary (date, tasks, sleep, bodybattery_min, bodybattery_max, steps, body, psyche, dizzy, comment)
-    #     VALUES (:date, :tasks, :sleep, :bodybattery_min, :bodybattery_max, :steps, :body, :psyche, :dizzy, :comment)
-    # """
-    # )
-
     upsert_stmt = text(
         """
         INSERT INTO diary (date, tasks, sleep, bodybattery_min, bodybattery_max, steps, body, psyche, dizzy, comment)
