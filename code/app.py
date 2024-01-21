@@ -18,7 +18,7 @@ DB_CONFIG = {
 def main():
     sql_engine = get_sql_engine(DB_CONFIG)
 
-    st.title("Vitaltagebuch")
+    st.title("Vital Tracker")
 
     # Default date is "yesterday"
     date_yesterday = date.today() - timedelta(days=1)
