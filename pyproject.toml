@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "moodfitnesstracker"
+name = "vitaltracker"
 version = "0.0.1"
 description = "Tracking mood and fitness"
 authors = ["cyclux <nevermind@cyclux.de>"]
