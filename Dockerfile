@@ -7,7 +7,7 @@
 ARG DEBIAN_VERSION=bookworm
 ARG PYTHON_VERSION=3.11.7
 ARG POETRY_VERSION=1.7.0
-ARG APP_NAME=moodfitnesstracker
+ARG APP_NAME=vitaltracker
 ARG APP_PATH=/opt/${APP_NAME}
 
 #----------------------
@@ -90,6 +90,6 @@ COPY --from=build --chown=${USER}:${USER} /opt/${APP_NAME}/dist/*.whl /home/${US
 RUN pip install --user /home/${USER}/${APP_NAME}*.whl \
     && rm /home/${USER}/${APP_NAME}*.whl
 
-WORKDIR /home/${USER}/code
+WORKDIR /home/${USER}/vitaltracker
 
 ENTRYPOINT ["/bin/bash"]

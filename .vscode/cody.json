@@ -1,0 +1,13 @@
+{
+  "commands": {
+    "docstring": {
+      "prompt": "Compose a Google-style Python docstring, enclosed in triple quotes. Include 'Args', 'Returns', 'Raises', 'Examples', and 'Note' sections as applicable, ensuring relevance to the broader code context.",
+      "context": {
+        "codebase": true,
+        "selection": true
+      },
+      "description": "Compose a Google-style Python docstring",
+      "mode": "edit"
+    }
+  }
+}

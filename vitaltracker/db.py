@@ -1,7 +1,11 @@
+import os
 from datetime import date
+from pathlib import Path
 import sqlalchemy as sql
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List
+import streamlit as st
+from dotenv import load_dotenv
 
 
 def check_success(result: sql.CursorResult) -> str:
@@ -20,6 +24,45 @@ def check_success(result: sql.CursorResult) -> str:
         return ":green[Gespeichert]"
     else:
         return ":red[Fehler bei der Speicherung. Versuche es erneut.]"
+
+
+def get_postgres_pw() -> str:
+    """Gets the PostgreSQL database password from the .env file.
+
+    Returns:
+        str: The PostgreSQL database password read from the
+            PG_PASSWORD environment variable.
+
+    Raises:
+        SystemExit: If the PG_PASSWORD environment variable is not set,
+            the program will stop execution and print an error message.
+
+    Note:
+        Relies on the python-dotenv package to load environment variables
+        from the .env file.
+    """
+    load_dotenv(Path(".env"))
+    pg_pw = os.environ.get("PG_PASSWORD")
+
+    if pg_pw is None:
+        st.write("Kein DB Passwort gefunden. Bitte ein Passwort in der .env anlegen.")
+        st.stop()
+
+    return pg_pw
+
+
+def get_postgres_uri() -> dict:
+    """Get PostgreSQL database URI.
+
+    Constructs the PostgreSQL database URI from environment variables.
+
+    Returns:
+        dict: Dictionary containing the PostgreSQL database URI
+            under the "uri" key.
+    """
+    return {
+        "uri": f"postgresql://postgres:{get_postgres_pw()}@docker_db:5432/moodfit_db",
+    }
 
 
 def get_sql_engine(db_config: dict) -> sql.Engine:

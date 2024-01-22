@@ -4,7 +4,7 @@ services:
 
   docker_moodfit:
     container_name: python311
-    image: cyclux/moodfitnesstracker:latest
+    image: cyclux/vitaltracker:latest
     build:
       context: ..
       dockerfile: Dockerfile
@@ -13,11 +13,11 @@ services:
     depends_on:
       - docker_db
     volumes:
-      - ../code/:/opt/moodfitnesstracker/
-      - ../docker/.env:/opt/env_file/.env:ro
+      - ../vitaltracker/:/opt/vitaltracker/
+      - ../docker/.env:/opt/vitaltracker/.env:ro
     ports:
       - 80:8501
-    entrypoint: ["streamlit", "run", "/opt/moodfitnesstracker/app.py"]
+    entrypoint: ["streamlit", "run", "/opt/vitaltracker/app.py"]
 
   docker_db:
     image: postgres:16.1-bookworm

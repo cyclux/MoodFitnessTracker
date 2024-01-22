@@ -1,22 +1,12 @@
-import os
-from pathlib import Path
-from dotenv import load_dotenv
 from datetime import date, timedelta
 import streamlit as st
-from db import get_sql_engine, add_diary_record, get_diary_record_by_date
+from db import get_sql_engine, get_postgres_uri, add_diary_record, get_diary_record_by_date
 from st_items import get_items
-
-# Get postgres password from .env file which was mounted by docker compose to folder env_file
-load_dotenv(Path("../env_file/.env"))
-PG_PASSWORD = os.environ.get("PG_PASSWORD")
-
-DB_CONFIG = {
-    "uri": f"postgresql://postgres:{PG_PASSWORD}@docker_db:5432/moodfit_db",
-}
 
 
 def main():
-    sql_engine = get_sql_engine(DB_CONFIG)
+    postgres_pw = get_postgres_uri()
+    sql_engine = get_sql_engine(postgres_pw)
 
     st.title("Vital Tracker")
 
