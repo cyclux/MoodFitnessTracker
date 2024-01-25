@@ -1,12 +1,17 @@
 from datetime import date, timedelta
 import streamlit as st
-from db import get_sql_engine, get_postgres_uri, add_diary_record, get_diary_record_by_date
-from st_items import get_items
+from db import (  # type: ignore
+    get_sql_engine,
+    get_postgres_uri,
+    add_diary_record,
+    get_diary_record_by_date,
+)
+from st_items import get_items  # type: ignore
 
 
 def main():
-    postgres_pw = get_postgres_uri()
-    sql_engine = get_sql_engine(postgres_pw)
+    postgres_uri = get_postgres_uri()
+    sql_engine = get_sql_engine(postgres_uri)
 
     st.title("Vital Tracker")
 
