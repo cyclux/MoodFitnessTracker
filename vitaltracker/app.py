@@ -13,15 +13,22 @@ def main():
     postgres_uri = get_postgres_uri()
     sql_engine = get_sql_engine(postgres_uri)
 
-    st.title("Vital Tracker")
-
     # Default date is "yesterday"
     date_yesterday = date.today() - timedelta(days=1)
-    current_date = st.date_input("Datum", date_yesterday)
+
+    # Set placeholder for the title
+    title = st.empty()
+
+    current_date = st.date_input(
+        "Datum",
+        date_yesterday,
+    )
 
     if isinstance(current_date, date):
         records = get_diary_record_by_date(current_date, sql_engine)
         items = get_items(current_date, records)
+        # Update the title with the current date
+        title.write(f"## Vital Tracker: {current_date}")
 
     else:
         st.write("Bitte ein Datum angeben")
