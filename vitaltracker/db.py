@@ -1,14 +1,41 @@
 import os
+from dotenv import load_dotenv
 from datetime import date
+
 from pathlib import Path
+
+import pandas as pd
+
 import sqlalchemy as sql
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, declarative_base
+from sqlalchemy import Column, Date, Integer, Float, Boolean, Text, ARRAY
+
 from typing import List
+
 import streamlit as st
-from dotenv import load_dotenv
+
+# TODO: find solutions for type ignore, sqlalchemy 2.* introduced new way of declaring Table classes
+
+# metadata_obj = MetaData()
+
+# Diary = Table(
+#     "diary",
+#     metadata_obj,
+#     Column("date", Date, primary_key=True),
+#     Column("tasks", Column(ARRAY(Integer))),
+#     Column("sleep", Column(Float)),
+#     Column("bodybattery_min", Column(Integer)),
+#     Column("bodybattery_max", Column(Integer)),
+#     Column("steps", Column(Integer)),
+#     Column("body", Column(Integer)),
+#     Column("psyche", Column(Integer)),
+#     Column("dizzy", Column(Boolean)),
+#     Column("comment", Column(Text)),
+# )
 
 
-def check_success(result: sql.CursorResult) -> str:
+def check_success(result: sql.Result) -> str:
     """Checks if a SQL statement was successful.
 
     Args:
@@ -20,6 +47,11 @@ def check_success(result: sql.CursorResult) -> str:
     Raises:
         SQLAlchemyError: If there was an error executing the SQL statement.
     """
+    if not isinstance(result, sql.CursorResult):
+        raise TypeError(
+            f"Der Parameter `result` muss ein Objekt vom Typ `CursorResult` sein. "
+            f"Der Typ `{type(result)}` wurde an die Funktion übergeben."
+        )
     if result.rowcount == 1:
         return ":green[Gespeichert]"
     else:
@@ -83,6 +115,32 @@ def get_sql_engine(db_config: dict) -> sql.Engine:
     return engine
 
 
+Base = declarative_base()
+
+
+class Diary(Base):  # type: ignore
+    __tablename__ = "diary"
+
+    date = Column(Date, primary_key=True)
+    tasks = Column(ARRAY(Integer))  # type: ignore
+    sleep = Column(Float)
+    bodybattery_min = Column(Integer)
+    bodybattery_max = Column(Integer)
+    steps = Column(Integer)
+    body = Column(Integer)
+    psyche = Column(Integer)
+    dizzy = Column(Boolean)
+    comment = Column(Text)
+
+    def __repr__(self):
+        return (
+            f"<Diary(date={self.date}, tasks={self.tasks}, sleep={self.sleep}, "
+            f"bodybattery_min={self.bodybattery_min}, bodybattery_max={self.bodybattery_max}, "
+            f"steps={self.steps}, body={self.body}, psyche={self.psyche}, "
+            f"dizzy={self.dizzy}, comment={self.comment})>"
+        )
+
+
 def add_diary_record(items: dict, sql_engine: sql.Engine) -> str:
     """Adds a record to the diary table in the moodfit_db database.
 
@@ -113,19 +171,46 @@ def add_diary_record(items: dict, sql_engine: sql.Engine) -> str:
             psyche = EXCLUDED.psyche,
             dizzy = EXCLUDED.dizzy,
             comment = EXCLUDED.comment
-    """
+        """
     )
-    # Execute the SQL statement with the provided items
+    # Use a Session to execute the SQL statement
     try:
-        with sql_engine.connect() as conn:
-            result = conn.execute(upsert_stmt, items)
-            conn.commit()
+        with Session(sql_engine) as session:
+            result = session.execute(upsert_stmt, items)
+            session.commit()
             response_txt = check_success(result)
 
     except SQLAlchemyError as e:
+        session.rollback()
         response_txt = f":red[Datenbankfehler:] {e}"
 
     return response_txt
+
+
+def add_diary_records_bulk(items: list[dict], sql_engine: sql.Engine) -> str:
+    """
+    Adds multiple records to the diary table in the moodfit_db database using bulk operation.
+
+    Args:
+        items (list[dict]): A list of dictionaries, each containing the diary record data.
+        sql_engine (sqlalchemy.engine.Engine): SQLAlchemy engine instance for the database.
+
+    Returns:
+        str: A message indicating whether the insert was successful.
+    """
+    try:
+        with Session(sql_engine) as session:
+            session.bulk_insert_mappings(
+                mapper=Diary,  # type: ignore
+                mappings=items,
+                render_nulls=True,
+            )
+            session.commit()
+            return "Records successfully added in bulk."
+
+    except SQLAlchemyError as e:
+        # Handle the exception and return an error message
+        return f"Database error: {e}"
 
 
 def get_diary_record_by_date(date: date, sql_engine: sql.Engine) -> dict:
@@ -176,4 +261,76 @@ def get_diary_record_by_date(date: date, sql_engine: sql.Engine) -> dict:
             "comment": result[9],
         }
     else:
-        return {}
+        return {"date": date}
+
+
+def get_diary_records_as_df(sql_engine: sql.Engine) -> pd.DataFrame:
+    """Query the diary table of the DB and return the records as a DataFrame.
+
+    Args:
+        sql_engine (sqlalchemy.engine.Engine): SQLAlchemy engine instance
+            for the database
+
+    Returns:
+        pd.DataFrame: Dataframe containing all records from the diary table
+
+    Raises:
+        SQLAlchemyError: If there is an error executing the SQL query
+
+    Examples:
+        ```python
+        import pandas as pd
+        from sqlalchemy import create_engine
+
+        engine = create_engine('sqlite:///mydb.sqlite')
+
+        df = get_diary_records_as_df(engine)
+        print(df.head())
+        ```
+
+    Note:
+        Converts the 'date' column to datetime64[s].
+    """
+    query = "SELECT * FROM diary"
+    df_diary = pd.read_sql_query(query, sql_engine)
+    # df_diary["date"] = df_diary["date"].astype("datetime64[s]")
+    df_diary["date"] = pd.to_datetime(df_diary["date"])
+
+    return df_diary.sort_values("date", ascending=False)
+
+
+def get_diary_records_by_date_range(
+    start_date: date, end_date: date, sql_engine: sql.Engine
+) -> pd.DataFrame:
+    """Query the diary table for a date range and return the records as a dataframe.
+
+    Args:
+        start_date (date): The start date of the range to query.
+        end_date (date): The end date of the range to query.
+        sql_engine (sqlalchemy.engine.Engine): SQLAlchemy engine instance
+            for the database
+
+    Returns:
+        pd.DataFrame: DataFrame containing the diary records within the
+        specified date range.
+
+    Raises:
+        SQLAlchemyError: If there is an error executing the SQL query.
+    """
+    df_diary = get_diary_records_as_df(sql_engine)
+    return df_diary[(df_diary["date"] >= start_date) & (df_diary["date"] <= end_date)]
+
+
+def _get_date_interval_col(df: pd.DataFrame, interval: str) -> pd.Series:
+    interval_length = pd.Timedelta(interval)
+    reference_start_date = df["date"].min()
+
+    return df["date"].apply(
+        lambda x: (x - reference_start_date).days // interval_length.days
+    )
+
+
+def get_df_with_interval_col(
+    df: pd.DataFrame, interval_days: str = "3days"
+) -> pd.DataFrame:
+    return df.assign(date_interval=_get_date_interval_col(df, interval_days))
