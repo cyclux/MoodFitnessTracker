@@ -2,3 +2,4 @@
 *.pdf
 *.docx
 db_test.ipynb
+/backup

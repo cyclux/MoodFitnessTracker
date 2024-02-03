@@ -2,5 +2,6 @@
 gatherUsageStats = false
 
 [server]
-fileWatcherType = "watchdog"
+fileWatcherType = "poll"
+# folderWatcherType = "poll"
 runOnSave = true

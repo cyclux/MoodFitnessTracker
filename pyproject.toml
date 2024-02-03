@@ -21,6 +21,7 @@ ipywidgets = "^8.1.1"
 ipykernel = "^6.29.0"
 nbformat = "^5.9.2"
 seaborn = "^0.13.2"
+st-pages = "^0.4.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
@@ -31,6 +32,7 @@ ipykernel = "^6.22.0"
 ipywidgets = "^8.0.6"
 ruff = "^0.1.13"
 pandas-stubs = "^2.1.4.231227"
+types-seaborn = "^0.13.1.20240115"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
