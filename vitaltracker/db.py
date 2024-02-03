@@ -264,6 +264,25 @@ def get_diary_record_by_date(date: date, sql_engine: sql.Engine) -> dict:
         return {"date": date}
 
 
+def _get_oldest_diary_record_date(sql_engine: sql.Engine) -> date | None:
+    """Query the diary table for the oldest record and return the date."""
+    # Define the SQL SELECT statement
+    columns: List[sql.ColumnElement] = [sql.column("date")]
+    select_stmt = (
+        sql.select(*columns)
+        .select_from(sql.table("diary"))
+        .order_by(sql.column("date").asc())
+        .limit(1)
+    )
+
+    # Execute the query and fetch the result
+    with sql_engine.connect() as conn:
+        result = conn.execute(select_stmt).fetchone()
+        if result:
+            return result[0]
+        return None
+
+
 def get_diary_records_as_df(sql_engine: sql.Engine) -> pd.DataFrame:
     """Query the diary table of the DB and return the records as a DataFrame.
 
@@ -318,10 +337,41 @@ def get_diary_records_by_date_range(
         SQLAlchemyError: If there is an error executing the SQL query.
     """
     df_diary = get_diary_records_as_df(sql_engine)
-    return df_diary[(df_diary["date"] >= start_date) & (df_diary["date"] <= end_date)]
+    return df_diary[
+        (df_diary["date"] >= pd.to_datetime(start_date))
+        & (df_diary["date"] <= pd.to_datetime(end_date))
+    ]
 
 
-def _get_date_interval_col(df: pd.DataFrame, interval: str) -> pd.Series:
+def _get_date_interval_column(df: pd.DataFrame, interval: str) -> pd.Series:
+    """Gets date interval column segmented by specified time interval.
+
+    Args:
+        df (pd.DataFrame): Input dataframe, must have a 'date' column.
+        interval (str): Interval duration over which to segment the 'date' values,
+            e.g. '3days'.
+
+    Returns:
+        pd.Series: Series containing integer segment number for each row's 'date'
+            value, segmented by the specified time interval.
+
+    Raises:
+        ValueError: If input dataframe does not have a 'date' column.
+
+    Examples:
+        >>> df = pd.DataFrame({'date': ['2023-01-01', '2023-01-04']})
+        >>> _get_date_interval_col(df, '2days')
+        0    0
+        1    1
+        Name: date_interval, dtype: int64
+
+    Note:
+        Date intervals are calculated relative to minimum 'date' value in the
+        dataframe.
+    """
+    if "date" not in df.columns:
+        raise ValueError("Input dataframe must have a 'date' column.")
+
     interval_length = pd.Timedelta(interval)
     reference_start_date = df["date"].min()
 
@@ -331,6 +381,44 @@ def _get_date_interval_col(df: pd.DataFrame, interval: str) -> pd.Series:
 
 
 def get_df_with_interval_col(
-    df: pd.DataFrame, interval_days: str = "3days"
+    df: pd.DataFrame, interval: str = "3days", interval_col_name: str = "date_interval"
 ) -> pd.DataFrame:
-    return df.assign(date_interval=_get_date_interval_col(df, interval_days))
+    """Gets a DataFrame with an added column segmented by a specified time interval.
+
+    This function adds a new column to the input DataFrame that represents time
+    intervals for each date entry. The intervals are calculated based on the
+    minimum date in the DataFrame.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame, which must have a 'date' column.
+        interval (str): The time interval used to segment the 'date' values.
+            Defaults to "3days".
+        interval_col_name (str): The name of the new interval column to be added
+            to the DataFrame. Defaults to "date_interval".
+
+    Returns:
+        pd.DataFrame: A copy of the input DataFrame with the added 'date_interval'
+            column containing integer segment numbers for each row's 'date' value,
+            segmented by the specified time interval.
+
+    Raises:
+        ValueError: If the input DataFrame does not have a 'date' column.
+
+    Examples:
+        >>> df = pd.DataFrame({'date': pd.to_datetime(['2023-01-01', '2023-01-04'])})
+        >>> get_df_with_interval_col(df)
+           date date_interval
+        0 2023-01-01            0
+        1 2023-01-04            1
+
+    Note:
+        The 'date' column is converted to datetime64 if not already in that format.
+        The date intervals are calculated relative to the minimum 'date' value in
+        the DataFrame. The name of the new interval column can be customized using
+        the 'interval_col_name' argument.
+    """
+    if "date" not in df.columns:
+        raise ValueError("Input dataframe must have a 'date' column.")
+
+    df[interval_col_name] = _get_date_interval_column(df, interval)
+    return df
