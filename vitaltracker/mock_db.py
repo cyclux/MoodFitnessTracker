@@ -1,6 +1,7 @@
 from typing import Any
 from datetime import datetime, timedelta
 import random
+import numpy as np
 
 
 def get_datelist_from_amount_of_days(days: int = 0):
@@ -32,9 +33,12 @@ def get_random_entry(day: str) -> dict[str, Any]:
     random_entry["tasks"] = random.choices([1, 2, 3], k=random.randint(0, 3))
 
     # Pick plausible random values for all other items
-    random_entry["sleep"] = random.randint(4, 12)
-    random_entry["bodybattery_min"] = random.randint(5, 100)
-    random_entry["bodybattery_max"] = random.randint(5, 100)
+    # random_entry["sleep"] = random.randint(4, 12)
+    random_entry["sleep"] = int(np.random.normal(8, 1, 1)[0])
+    random_entry["bodybattery_min"] = int(np.random.normal(20, 7, 1)[0])
+    random_entry["bodybattery_max"] = int(np.random.normal(75, 7, 1)[0])
+    # random_entry["bodybattery_min"] = random.uniform(5, 40)
+    # random_entry["bodybattery_max"] = random.uniform(50, 100)
     random_entry["steps"] = random.randint(400, 8000)
     random_entry["body"] = random.randint(0, 6)
     random_entry["psyche"] = random.randint(0, 6)
