@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 import streamlit as st
+
+from st_pages import show_pages_from_config, add_page_title
 from db import (  # type: ignore
     get_sql_engine,
     get_postgres_uri,
@@ -10,6 +12,9 @@ from st_items import get_items  # type: ignore
 
 
 def main():
+    show_pages_from_config()
+    add_page_title()
+
     postgres_uri = get_postgres_uri()
     sql_engine = get_sql_engine(postgres_uri)
 
@@ -19,16 +24,17 @@ def main():
     # Set placeholder for the title
     title = st.empty()
 
-    current_date = st.date_input(
+    date_current = st.date_input(
         "Datum",
         date_yesterday,
+        format="DD.MM.YYYY",
     )
 
-    if isinstance(current_date, date):
-        records = get_diary_record_by_date(current_date, sql_engine)
-        items = get_items(current_date, records)
+    if isinstance(date_current, date):
+        records = get_diary_record_by_date(date_current, sql_engine)
+        items = get_items(date_current, records)
         # Update the title with the current date
-        title.write(f"## Vital Tracker: {current_date}")
+        title.write(f"## Datum: {date_current.strftime('%d.%m.%Y')}")
 
     else:
         st.write("Bitte ein Datum angeben")
