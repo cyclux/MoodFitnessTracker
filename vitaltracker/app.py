@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 import streamlit as st
 
-from st_pages import show_pages_from_config, add_page_title
+from st_pages import Page, show_pages, add_page_title
 from db import (  # type: ignore
     get_sql_engine,
     get_postgres_uri,
@@ -12,7 +12,13 @@ from st_items import get_items  # type: ignore
 
 
 def main():
-    show_pages_from_config()
+    show_pages(
+        [
+            Page("app.py", "Fragebogen", "📋"),
+            Page("analysis.py", "Analyse", "📊"),
+        ]
+    )
+
     add_page_title()
 
     postgres_uri = get_postgres_uri()
