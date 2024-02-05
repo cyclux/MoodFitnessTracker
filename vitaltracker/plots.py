@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
+X_LABEL = "Zeitintervall"
 Y_LABELS = {
     "sleep": "Schlafzeit [h]",
     "bodybattery": "Body Battery [%]",
@@ -29,12 +29,11 @@ def _merge_pd_series(col1: pd.Series, col2: pd.Series) -> pd.DataFrame:
     return pd.DataFrame({f"{col1.name}": col1, f"{col2.name}": col2})
 
 
-def run_interval_plots(df: pd.DataFrame) -> None:
-    x_label = "Zeitintervall"
-
+def run_interval_plots(df: pd.DataFrame, interval: str) -> None:
     # Sleep
     st.write("### Schlafzeit")
     plot_sleep = sns.boxplot(y=df["sleep"], x=df["date_interval"])
+    plot_sleep.set_xlabel(X_LABEL + f" [{interval}]")
     plot_sleep.set_ylabel(Y_LABELS["sleep"])
     st.pyplot(plot_sleep.get_figure())
     plt.clf()
@@ -63,6 +62,7 @@ def run_interval_plots(df: pd.DataFrame) -> None:
         capsize=0.2,
         color="black",
     )
+    plot_bodybattery.set_xlabel(X_LABEL + f" [{interval}]")
     plot_bodybattery.set_ylabel(Y_LABELS["bodybattery"])
     st.pyplot(plot_bodybattery.get_figure())
     plt.clf()
@@ -84,6 +84,7 @@ def run_interval_plots(df: pd.DataFrame) -> None:
     plot_bodybattery_violin = sns.violinplot(
         x="date_interval", y="bodybattery", data=df_bodybattery_min_max_merged
     )
+    plot_bodybattery_violin.set_xlabel(X_LABEL + f" [{interval}]")
     plot_bodybattery_violin.set_ylabel(Y_LABELS["bodybattery"])
     st.pyplot(plot_bodybattery_violin.get_figure())
     plt.clf()
@@ -91,6 +92,7 @@ def run_interval_plots(df: pd.DataFrame) -> None:
     # Steps
     st.write("### Schritte")
     plot_steps = sns.boxplot(y=df["steps"], x=df["date_interval"])
+    plot_steps.set_xlabel(X_LABEL + f" [{interval}]")
     plot_steps.set_ylabel(Y_LABELS["steps"])
     st.pyplot(plot_steps.get_figure())
     plt.clf()
@@ -98,6 +100,7 @@ def run_interval_plots(df: pd.DataFrame) -> None:
     # Body
     st.write("### Körpergefühl")
     plot_body = sns.boxplot(y=df["body"], x=df["date_interval"])
+    plot_body.set_xlabel(X_LABEL + f" [{interval}]")
     plot_body.set_ylabel(Y_LABELS["body"])
     st.pyplot(plot_body.get_figure())
     plt.clf()
@@ -105,6 +108,7 @@ def run_interval_plots(df: pd.DataFrame) -> None:
     # Psyche
     st.write("### Psychegefühl")
     plot_psyche = sns.boxplot(y=df["psyche"], x=df["date_interval"])
+    plot_psyche.set_xlabel(X_LABEL + f" [{interval}]")
     plot_psyche.set_ylabel(Y_LABELS["psyche"])
     st.pyplot(plot_psyche.get_figure())
     plt.clf()
@@ -118,7 +122,6 @@ def run_interval_plots(df: pd.DataFrame) -> None:
     )
 
     st.write("### Schwindel")
-    # hue_order = ["Ja", "Nein"]
     plot_dizzy = sns.barplot(
         x="date_interval",
         y="count",
@@ -134,6 +137,7 @@ def run_interval_plots(df: pd.DataFrame) -> None:
     for t, label in zip(plot_dizzy.legend().texts, new_labels):
         t.set_text(label)
 
+    plot_dizzy.set_xlabel(X_LABEL + f" [{interval}]")
     plot_dizzy.set_ylabel(Y_LABELS["dizzy"])
     # Adjusting the plot to make it more readable
     plt.axhline(0, color="black", linewidth=0.8)
@@ -208,8 +212,18 @@ def run_daily_plots(df: pd.DataFrame) -> None:
 
     st.write("### Schwindel")
     plot_dizzy = sns.barplot(
-        x="date_interval", y="count", hue="dizzy", data=df_dizzy, dodge=False
+        x="date_interval",
+        y="count",
+        hue="dizzy",
+        data=df_dizzy,
+        dodge=False,
+        hue_order=[True, False],
     )
+    # Set the labels of the legend
+    new_labels = ["Ja", "Nein"]
+    for t, label in zip(plot_dizzy.legend().texts, new_labels):
+        t.set_text(label)
+
     plot_dizzy.set_ylabel(Y_LABELS["dizzy"])
     plot_dizzy.set_xticks(range(0, len(df_dizzy["date_interval"]), 20))
     # Adjusting the plot to make it more readable
@@ -220,7 +234,7 @@ def run_daily_plots(df: pd.DataFrame) -> None:
 
 
 def create_plots(df: pd.DataFrame, interval: str) -> None:
-    if interval == "daily":
+    if interval == "1day":
         run_daily_plots(df)
     else:
-        run_interval_plots(df)
+        run_interval_plots(df, interval)
